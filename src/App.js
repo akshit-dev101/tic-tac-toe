@@ -2,43 +2,61 @@ import React,{useState}from "react";
 import Board from "./components/Board";
 import "./styles/root.scss";
 import {calculateWinner} from './helpers';
+import History from "./components/History";
+import StatusMessage from "./components/StatusMessage";
+
+const NEW_GAME=[{board:Array(9).fill(null),isXNext:true}];
+
 
 const App=()=>{
 
-  const [board, setBoard] = useState(Array(9).fill(null));
+  const [history, setHistory] = useState(NEW_GAME);
+  const [currentMove, setCurrentMove] = useState(0);
+  const current =history[currentMove];
   const [isXNext, setIsXNext] = useState(false);
 
-const winner=calculateWinner(board);
-const message=winner ? `Winner is ${winner}`:`Next player is ${isXNext?'X':'O'}`
+const {winner,winningSquares}=calculateWinner(current.board);
 
 
   const handleSquareClick = position => {
-    if (board[position]||winner) {
+    if (current.board[position]||winner) {
       return;
     }
 
-    setBoard(prev => {
-      return prev.map((square, pos) => {
+    setHistory(prev => {
+
+      const last=prev[prev.length-1];
+      const newBoard= last.board.map((square, pos) => {
         if (pos === position) {
-          return isXNext ? 'X' : 'O';
+          return last.isXNext ? 'X' : 'O';
         }
 
         return square;
       });
-    });
+return prev.concat({board:newBoard,isXNext:!last.isXNext})
 
+    });
+setCurrentMove(prev=>prev+1)
     setIsXNext(prev => !prev);
   };
 
 
+const moveTo=(move)=>{
+  setCurrentMove(move);
+}
 
+const onNewGame=()=>{
+  setHistory (NEW_GAME);
+  setCurrentMove(0);
+};
 return(
 
 <div className="app">
 <h1>TIC TAC TOE</h1>
-<h2>{message}</h2>
-<Board handleSquareClick={handleSquareClick} board={board}/>
-
+<h2><StatusMessage winner={winner} current={current}/></h2>
+<Board winningSquares={winningSquares} handleSquareClick={handleSquareClick} board={current.board}/>
+<button type="button" onClick={onNewGame}>Start new game</button>
+<History history={history} moveTo={moveTo} currentMove={currentMove}/>
 </div>
 
 )
